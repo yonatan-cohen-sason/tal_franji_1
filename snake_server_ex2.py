@@ -26,8 +26,9 @@ from urllib.parse import urlparse, parse_qs
 
 
 # Global shared queue for communication between HTTP server and Game Loop
-GAME_INPUT_QUEUE = queue.Queue()
+requests_queue = queue.Queue()
 
+updates = []
 
 class Snake:
     """Snake class handles the position in a snake game"""
@@ -177,11 +178,18 @@ class GameIO:
         self._stdscr.nodelay(1)  # make getch non-blocking
 
     def get_key(self):
-        if not GAME_INPUT_QUEUE.empty():
-            return GAME_INPUT_QUEUE.get_nowait()
+        if not requests_queue.empty():
+            tup = requests_queue.get()
+            k = tup[1]
+            q = tup[2]
+            q.put(updates[k:])
+            if tup[0] != None:
+                return tup[0]
+
         return self._stdscr.getch()
 
     def screen_update(self, y, x, c):
+        updates.append((y,x,c))
         self._stdscr.addstr(y, x, c)
 
     def refresh(self):
@@ -238,10 +246,18 @@ class GameHandler(BaseHTTPRequestHandler):
         # key is the optional keycode to simulate
         key_param = query.get('key', [None])[0]
         key = int(key_param) if key_param is not None else None
-        if key is not None:
-            GAME_INPUT_QUEUE.put(key)
-        response = []
-        response_data = json.dumps(response)
+
+
+        q = queue.Queue()
+        request_item = (key, k, q)
+        requests_queue.put(request_item)
+
+
+        updates = q.get()
+        # return updates
+
+
+        response_data = json.dumps(updates)
         # Prepare and send response
         self.send_response(200)
         self.send_header("Content-type", "application/json")
