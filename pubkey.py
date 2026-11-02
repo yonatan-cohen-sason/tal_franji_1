@@ -128,4 +128,3 @@ def test_sign_and_encrypt():
     # comes from her.
     bob_out = bob.decrypt(alice_pub.encrypt(alice2bob))
     assert bob_out == alice_message
-
