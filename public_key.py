@@ -2,7 +2,7 @@ import pubkey
 import base64
 
 # Public key of the receiver
-pub64 = "vKJPCApGefea7+8AOG71NlUpuh/rAMQzQSxC3DHQEP/sQQHOrNRcoPi3YJqLqPF1FmKZnYSOIR4/Oo3G/7J6cPTkBHXMErJXofME3Pp8eMl639gLE/hF0QJPL+W1+TRDM6oGpcXOrKoIdsKB39B0kF2++DcFM6qcbaI5mBzYFCc="
+pub64 = "tD8az7ip4clY3wAZevQYmgT/HmHBlRfS4Gm0r3Q2cwu8Oh4SxC0yr84BnYmiqY/gVqkkaLuIdKX+WaPvYgplIIu49PipU+gbLZwfQ3WipiaAb9p1Bi0nJfAJ5ooASNSEEQ2rJiLeT7ZxH2Pxqd0qY/2qxy6Coddaqo0N+RDQecs="
 
 # Convert Base64 to bytes
 pub_key_bytes = base64.b64decode(pub64)
@@ -11,7 +11,7 @@ pub_key_bytes = base64.b64decode(pub64)
 pub_key = pubkey.RSA1024.from_public_bytes(pub_key_bytes)
 
 # Encrypt message
-message = "ValueError: Ciphertext too large"
+message = "dear tal keinan: i think its not allowed to be so handsome you are very sexy and i know you vote only to big yahu "
 
 message_bytes = pub_key.encrypt(message.encode("utf-8"))
 
@@ -29,7 +29,7 @@ print("message:" , message64)
 # key = pubkey.RSA1024.from_private_text(text)
 
 # # Encrypted message received
-# text64 = "P+SzMcxUuGRp2VdaVvMbOi5utdqTGG+zjN1knQSAfW6dpt3BAkT5wQ8dCUsQTH9/sg8WsXFzDkwzw1z9lSWAbUzKCeFJ2sZ6PftBJqlUXVNyoT4v44/kNJtw6NsA7EhKWTTYIo6l2UXjij6wp6Y7KhAoFC7+U/j/czLg2EX3XDQ="
+# text64 = "m5x9une7ylPs5awdV0GMMKP5eH8q1LM3MgsAE0RjXuFohS9Q/QwhUzY2ehbBIhPLWBe7JfreNGJ15ExuQAkpamQqMagjxQaXmz4iv+UYL+rD+wRk0ob0n0oRlRnU2n3PNWG61ie5jn+o3mWuuAGRIl99/ahJHssSAJfF99Un63k="
 
 # # Convert Base64 to bytes
 # message_bytes = base64.b64decode(text64)
