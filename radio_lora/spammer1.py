@@ -1,7 +1,7 @@
 import base64
 import struct
 import time
-from tal_franji_1.loramodem import LoRaModem
+from tal_franji_1.lora_project.loramodem import LoRaModem
 import random
 senders = {
     b'\xb2\x01\xa5\xbd': "itaiyehuda22@gmail.com",
