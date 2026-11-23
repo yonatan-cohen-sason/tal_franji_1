@@ -62,9 +62,15 @@ def handle_alive(request):
     return {"status": "OK", "messages": []}
 
 def radio_loop():
-    while True:
-        print("radio: tick")
-        time.sleep(2)
+    with LoRaModem("sim") as modem:        
+        modem.configure_packet_mode()                    
+        print("radio: modem ready")
+        while True:
+            packet = modem.read_bytes()    
+            if packet:
+                print("radio: received", len(packet), "bytes:", packet[:6].hex())
+            else:
+                time.sleep(1)
 
 def main():
     radio_thread = threading.Thread(target = radio_loop, daemon = True )
