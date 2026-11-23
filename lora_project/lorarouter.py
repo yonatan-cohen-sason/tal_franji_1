@@ -8,6 +8,7 @@ import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 users = {}
+users_lock = threading.Lock()
 
 class RouterHandler(BaseHTTPRequestHandler):
 
@@ -15,7 +16,8 @@ class RouterHandler(BaseHTTPRequestHandler):
         if self.path == "/status":
             response = {"status": "OK"}
         elif self.path == "/users":
-            response = {"status": "OK", "users" : users}
+            with users_lock:
+                response = {"status": "OK", "users" : list(users.values)}
         else:
             response = {"status": "error"}
 
@@ -46,16 +48,16 @@ def handle_alive(request):
     key_b64 = request["key_b64"]               
     key_bytes = base64.b64decode(key_b64)     
     key_id = struct.unpack("!I", key_bytes[:4])[0]    
-
-    users[key_id] = {
-        "key_id": key_id,
-        "key_b64": key_b64,
-        "nick": request.get("nick", ""),    
-        "name": request.get("name", ""),
-        "phone": request.get("phone", ""),
-        "is_local": True,
-        "delay_secs" : 0,              
-    }
+    with users_lock:
+        users[key_id] = {
+            "key_id": key_id,
+            "key_b64": key_b64,
+            "nick": request.get("nick", ""),    
+            "name": request.get("name", ""),
+            "phone": request.get("phone", ""),
+            "is_local": True,
+            "delay_secs" : 0,              
+        }
     print(f"alive from {key_id:08x}, now {len(users)} users")
     return {"status": "OK", "messages": []}
 
