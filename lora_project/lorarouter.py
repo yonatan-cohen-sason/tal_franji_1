@@ -17,7 +17,7 @@ class RouterHandler(BaseHTTPRequestHandler):
             response = {"status": "OK"}
         elif self.path == "/users":
             with users_lock:
-                response = {"status": "OK", "users" : list(users.values)}
+                response = {"status": "OK", "users" : list(users.values())}
         else:
             response = {"status": "error"}
 
@@ -58,7 +58,7 @@ def handle_alive(request):
             "is_local": True,
             "delay_secs" : 0,              
         }
-    print(f"alive from {key_id:08x}, now {len(users)} users")
+        print(f"alive from {key_id:08x}, now {len(users)} users")
     return {"status": "OK", "messages": []}
 
 def radio_loop():
