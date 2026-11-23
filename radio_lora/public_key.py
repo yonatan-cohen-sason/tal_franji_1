@@ -1,4 +1,4 @@
-import pubkey
+import tal_franji_1.radio_lora.pubkey as pubkey
 import base64
 
 # Public key of the receiver

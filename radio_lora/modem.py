@@ -1,7 +1,7 @@
 import base64
 import struct
 import time
-from loramodem import LoRaModem
+from tal_franji_1.radio_lora.loramodem import LoRaModem
 import random
 senders = {
     b'\xb2\x01\xa5\xbd': "itaiyehuda22@gmail.com",
@@ -26,9 +26,10 @@ senders = {
     b'\xbb\xc0\xf4\x0b': "leannenissenson@gmail.com",
 }
 
-keys = dict()   
-last_msg = dict()
+keys = dict()       # sender -> כמה הודעות שלח
+last_msg = dict()   # sender -> ההודעה האחרונה שלו
 
+# Claude: key_id מתוך המפתח הציבורי - cohensason1
 pub64 = "pRzWWkFqhM2Mf7tYy6zm9z1BGRQYXJWehINhKD2HVgprg9/5S7kosOhv/UdqNbGFdiJZEkjnzARlk6BeTnEpSXMvgSphJ54wXY3oTrt2WgJEtcH1bEAsuVzuo1f4lh0u5X6LMiWtuqAhoT6uqSNpWp+xM/6Kas+eGxWAsi9lIZc="
 key_id_bytes = base64.b64decode(pub64)[:4]
 print("My key_id:", key_id_bytes.hex())
@@ -36,11 +37,14 @@ LOG_FILE = "messages.txt"
 sent_count = 0
 next_send = time.time()
 
+# Claude: מטריצה של כולם - matrix[מי מדווח][על מי] = כמה
 matrix = {}
 
+# Claude: שם קצר לטבלה
 def short(k):
     return senders.get(k, k.hex()).split("@")[0][:10]
 
+# Claude: הדפסת המטריצה
 def print_matrix():
     matrix[key_id_bytes] = {key_id_bytes: sent_count, **keys}
     people = sorted(set(matrix) | {k for row in matrix.values() for k in row}, key=short)
@@ -50,11 +54,10 @@ def print_matrix():
         row = matrix.get(r, {})
         print(f"{short(r):<11}" + "".join(f"{row.get(c, ''):>11}" for c in people))
 
-modem = LoRaModem("COM20",115200)
-modem.configure_packet_mode()
+modem = LoRaModem("sim", 10)
 
 while True:
-    data = modem.read_bytes() 
+    data = modem.read_from_simulator()
     if data and data[:4] != key_id_bytes:
         sender = data[:4]
         content = data[4:]
@@ -70,12 +73,13 @@ while True:
 
         if len(data) % 6 == 0:
             recs = [struct.unpack_from("!4sH", data, i) for i in range(0, len(data), 6)]
+            # Claude: מי ששלח בלי "!" - הבתים של המונה הפוכים (כל המספרים כפולות של 256) -> הופכים בחזרה
             if any(c for _, c in recs) and all(c % 256 == 0 for _, c in recs):
                 recs = [(k, c >> 8) for k, c in recs]
             with open(LOG_FILE, "a") as f:
                 for key, count in recs:
                     f.write(f"{int(time.time())},{sender.hex()},{key.hex()},{count}\n")
-                    matrix.setdefault(sender, {})[key] = count
+                    matrix.setdefault(sender, {})[key] = count   # Claude: שמירה במטריצה
 
     if time.time() >= next_send:
         sent_count += 1
@@ -83,9 +87,11 @@ while True:
         message.extend(struct.pack("!4sH", key_id_bytes, sent_count))
         for key, count in keys.items():
             message.extend(struct.pack("!4sH", key, count))
-        modem.write_bytes(bytes(message))
-        print(f"the message num {sent_count}")
-
+        modem.send_to_simulator(bytes(message))
+        # Claude: הדפסה ברורה של מה שנשלח
+        print(f">>> שלחתי הודעה מספר {sent_count}")
+        for key, count in keys.items():
+            print(f"    אמרתי שקיבלתי {count} הודעות מ-{short(key)}")
 
         print("=== Message counts ===")
         for key, count in sorted(keys.items(), key=lambda t: t[1], reverse=True):
@@ -93,6 +99,8 @@ while True:
             last = last_msg[key].decode("utf-8", errors="replace")
             print(f"{name}: {count} | last: {last}")
         print("======================")
-        print_matrix()
+        print_matrix()   # Claude: הצגת המטריצה
 
         next_send = time.time() + random.uniform(5, 10)
+
+    time.sleep(0.1)
