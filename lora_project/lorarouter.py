@@ -31,6 +31,7 @@ class RouterHandler(BaseHTTPRequestHandler):
 
         if self.path == "/alive":
             response = {"status": "OK", "messages": []}
+            response = handle_alive(request)
         else:
             response = {"status": "error"}
 
@@ -41,9 +42,9 @@ class RouterHandler(BaseHTTPRequestHandler):
         self.wfile.write(response_data.encode("utf-8"))
 
 def handle_alive(request):
-    key_b64 = request[key_b64]               
+    key_b64 = request["key_b64"]               
     key_bytes = base64.b64decode(key_b64)     
-    key_id = struct.unpack("!I", key_bytes)[0]    
+    key_id = struct.unpack("!I", key_bytes[:4])[0]    
 
     users[key_id] = {
         "key_id": key_id,
