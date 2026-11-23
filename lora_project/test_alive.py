@@ -1,9 +1,6 @@
-import base64
 import requests
-from pubkey import RSA1024
 
-key = RSA1024.generate()
-key_b64 = base64.b64encode(key.public_bytes()).decode("utf-8")
+key_b64 = "pRzWWkFqhM2Mf7tYy6zm9z1BGRQYXJWehINhKD2HVgprg9/5S7kosOhv/UdqNbGFdiJZEkjnzARlk6BeTnEpSXMvgSphJ54wXY3oTrt2WgJEtcH1bEAsuVzuo1f4lh0u5X6LMiWtuqAhoT6uqSNpWp+xM/6Kas+eGxWAsi9lIZc="
 
 data = {"key_b64": key_b64, "nick": "yonatan", "name": "Yonatan", "phone": "050"}
 r = requests.post("http://localhost:8090/alive", json=data)

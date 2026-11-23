@@ -54,7 +54,7 @@ def handle_alive(request):
         "phone": request.get("phone", ""),
         "is_local": True,                 
     }
-    print(f"alive from {key_id:08x}, now {len(users)} users")
+    #print(f"alive from {key_id:08x}, now {len(users)} users")
     return {"status": "OK", "messages": []}
 
 def radio_loop():
