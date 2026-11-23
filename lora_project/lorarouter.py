@@ -25,16 +25,19 @@ class RouterHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         length = int(self.headers["Content-Length"])
         body = self.rfile.read(length)
-        request = json.load(body)
+        request = json.loads(body)
         print("got POST:", self.path, request)
 
-        if self.path == "status":
+        if self.path == "/alive":
             response = {"status": "OK", "messages": []}
         else:
             response = {"status": "error"}
 
-        # 4. לשלוח תשובה (בדיוק כמו ב-do_GET)
-        ...
+        response_data = json.dumps(response)
+        self.send_response(200)
+        self.send_header("Content-type", "application/json")
+        self.end_headers()
+        self.wfile.write(response_data.encode("utf-8"))
 
 
 def radio_loop():
@@ -44,7 +47,7 @@ def radio_loop():
 
 def main():
     radio_thread = threading.Thread(target = radio_loop, daemon = True )
-    radio_thread.start
+    radio_thread.start()
     server_address = ("", 8090)  
     httpd = ThreadingHTTPServer(server_address, RouterHandler)
     print("Router listening...")
