@@ -7,6 +7,7 @@ import queue
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+users = {}
 
 class RouterHandler(BaseHTTPRequestHandler):
 
@@ -39,6 +40,21 @@ class RouterHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(response_data.encode("utf-8"))
 
+def handle_alive(request):
+    key_b64 = request[key_b64]               
+    key_bytes = base64.b64decode(key_b64)     
+    key_id = struct.unpack("!I", key_bytes)[0]    
+
+    users[key_id] = {
+        "key_id": key_id,
+        "key_b64": key_b64,
+        "nick": request.get("nick", ""),    
+        "name": request.get("name", ""),
+        "phone": request.get("phone", ""),
+        "is_local": True,                 
+    }
+    print(f"alive from {key_id:08x}, now {len(users)} users")
+    return {"status": "OK", "messages": []}
 
 def radio_loop():
     while True:
