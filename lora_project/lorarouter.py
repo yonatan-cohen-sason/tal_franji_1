@@ -14,6 +14,8 @@ class RouterHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/status":
             response = {"status": "OK"}
+        elif self.path == "/users":
+            response = {"status": "OK", "users" : users}
         else:
             response = {"status": "error"}
 
@@ -30,7 +32,6 @@ class RouterHandler(BaseHTTPRequestHandler):
         print("got POST:", self.path, request)
 
         if self.path == "/alive":
-            response = {"status": "OK", "messages": []}
             response = handle_alive(request)
         else:
             response = {"status": "error"}
@@ -52,9 +53,10 @@ def handle_alive(request):
         "nick": request.get("nick", ""),    
         "name": request.get("name", ""),
         "phone": request.get("phone", ""),
-        "is_local": True,                 
+        "is_local": True,
+        "delay_secs" : 0,              
     }
-    #print(f"alive from {key_id:08x}, now {len(users)} users")
+    print(f"alive from {key_id:08x}, now {len(users)} users")
     return {"status": "OK", "messages": []}
 
 def radio_loop():
