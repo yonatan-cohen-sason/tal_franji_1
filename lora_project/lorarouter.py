@@ -11,7 +11,6 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 class RouterHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        # self.path הוא מה שבא אחרי הכתובת, למשל "/status"
         if self.path == "/status":
             response = {"status": "OK"}
         else:
@@ -24,9 +23,15 @@ class RouterHandler(BaseHTTPRequestHandler):
         self.wfile.write(response_data.encode("utf-8"))
 
 
+def radio_loop():
+    while True:
+        print("radio: tick")
+        time.sleep(2)
+
 def main():
-    server_address = ("", 8090)   # באיזה פורט הראוטר צריך להאזין? (רמז: זה כתוב ב-router_client.py)
-    httpd = ThreadingHTTPServer(server_address, do_get())   # איזו מחלקה מטפלת בבקשות?
+    radio_thread = threading.Thread(target = radio_loop, daemon = True )
+    server_address = ("", 8090)  
+    httpd = ThreadingHTTPServer(server_address, RouterHandler)
     print("Router listening...")
     httpd.serve_forever()
 
