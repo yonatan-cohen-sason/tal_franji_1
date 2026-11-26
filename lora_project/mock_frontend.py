@@ -18,7 +18,7 @@ def send_alive(user):
 
 
 def print_users():
-    r = requests.post(ROUTER_URL + "/users")
+    r = requests.get(ROUTER_URL + "/users")
     users = r.json()["users"]
     print(f"--- router knows {len(users)} users ---")
     for u in users:
