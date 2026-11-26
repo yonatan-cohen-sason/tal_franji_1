@@ -31,8 +31,6 @@ class RouterHandler(BaseHTTPRequestHandler):
         length = int(self.headers["Content-Length"])
         body = self.rfile.read(length)
         request = json.loads(body)
-        print("got POST:", self.path, request)
-
         if self.path == "/alive":
             response = handle_alive(request)
         else:
@@ -68,10 +66,7 @@ def handle_alive(request):
         user["nick"] = request.get("nick", "") 
         user["name"] = request.get("name", "")
         user["phone"] = request.get("phone", "")
-        print(f"alive from {key_id:08x}, now {len(users)} users")
     return {"status": "OK", "messages": []}
-
-
 
 
 def choose_user_to_publish(now, last_send):

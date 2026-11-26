@@ -14,7 +14,8 @@ def make_user(nick, name, phone):
 
 def send_alive(user):
     r = requests.post(ROUTER_URL + "/alive" ,  json=user)
-    print(f"alive {user['nick']}: {r.json()['status']}")
+    if r.json()["status"] != "OK":
+        print(f"alive {user['nick']} FAILED: {r.json()}")
 
 
 def print_users():
