@@ -53,7 +53,7 @@ def handle_alive(request):
     key_b64 = request["key_b64"]               
     key_bytes = base64.b64decode(key_b64)     
     key_id = struct.unpack("!I", key_bytes[:4])[0]    
-        with users_lock:
+    with users_lock:
         if key_id not in users:
             users[key_id] = {
                 "key_id": key_id,
@@ -71,6 +71,37 @@ def handle_alive(request):
         print(f"alive from {key_id:08x}, now {len(users)} users")
     return {"status": "OK", "messages": []}
 
+
+
+
+def choose_user_to_publish(now, last_send):
+    with users_lock:
+        local_users = []
+        new_users = []
+        for user in users.values():
+            if user["is_local"]:
+                local_users.append(user)
+                if user["publish_count"] < 3:
+                    new_users.append(user)
+
+        if not local_users:
+            return None
+
+        if new_users:
+            interval = 5
+            candidates = new_users
+        else:
+            interval = 20
+            candidates = local_users
+
+        if now - last_send < interval:
+            return None
+
+        return min(candidates, key=lambda u: u["publish_count"])
+
+
+
+
 def radio_loop():
     with LoRaModem("sim") as modem:           
         modem.configure_packet_mode()          
@@ -78,21 +109,15 @@ def radio_loop():
         last_send = 0                         
         while True:                                  
             now = time.time()
-            if now - last_send >= 10:
+            user = choose_user_to_publish(now, last_send)
+            if user is not None:
+                packet = build_key_publish(user["key_b64"])
+                modem.write_bytes(packet)
                 last_send = now
                 with users_lock:
-                    local_users = []
-                    for user in users.values():
-                        if user["is_local"]:
-                            local_users.append(user)
-                if local_users:
-                    user = local_users[0]
-                    packet = build_key_publish(user["key_b64"])
-                    modem.write_bytes(packet)
-                    with users_lock:
-                        user["publish_count"] += 1
-                        user["last_published"] = int(now)
-                    print(f"radio: sent key-publish for {user['key_id']:08x} (time #{user['publish_count']})")
+                    user["publish_count"] += 1
+                    user["last_published"] = int(now)
+                print(f"radio: sent key-publish for {user['key_id']:08x} (time #{user['publish_count']})")
             packet = modem.read_bytes()
             if packet:
                 print("radio: received", len(packet), "bytes:", packet[:6].hex())
