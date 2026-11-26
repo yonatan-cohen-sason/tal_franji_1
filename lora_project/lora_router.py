@@ -53,16 +53,21 @@ def handle_alive(request):
     key_b64 = request["key_b64"]               
     key_bytes = base64.b64decode(key_b64)     
     key_id = struct.unpack("!I", key_bytes[:4])[0]    
-    with users_lock:
-        users[key_id] = {
-            "key_id": key_id,
-            "key_b64": key_b64,
-            "nick": request.get("nick", ""),    
-            "name": request.get("name", ""),
-            "phone": request.get("phone", ""),
-            "is_local": True,
-            "delay_secs" : 0,              
-        }
+        with users_lock:
+        if key_id not in users:
+            users[key_id] = {
+                "key_id": key_id,
+                "key_b64": key_b64,
+                "is_local": True,
+                "delay_secs": 0,
+                "publish_count": 0,
+                "last_published": 0,
+            }
+            print(f"new user {key_id:08x}")
+        user = users[key_id]
+        user["nick"] = request.get("nick", "") 
+        user["name"] = request.get("name", "")
+        user["phone"] = request.get("phone", "")
         print(f"alive from {key_id:08x}, now {len(users)} users")
     return {"status": "OK", "messages": []}
 
@@ -84,7 +89,10 @@ def radio_loop():
                     user = local_users[0]
                     packet = build_key_publish(user["key_b64"])
                     modem.write_bytes(packet)
-                    print(f"radio: sent key-publish for {user['key_id']:08x}, {len(packet)} bytes")
+                    with users_lock:
+                        user["publish_count"] += 1
+                        user["last_published"] = int(now)
+                    print(f"radio: sent key-publish for {user['key_id']:08x} (time #{user['publish_count']})")
             packet = modem.read_bytes()
             if packet:
                 print("radio: received", len(packet), "bytes:", packet[:6].hex())
