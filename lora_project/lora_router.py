@@ -3,7 +3,6 @@ import struct
 import time
 from loramodem import LoRaModem
 import threading
-import queue
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -28,10 +27,16 @@ class RouterHandler(BaseHTTPRequestHandler):
         self.wfile.write(response_data.encode("utf-8"))
 
     def do_POST(self):
-        length = int(self.headers["Content-Length"])
+        length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(length)
-        request = json.loads(body)
-        if self.path == "/alive":
+        try:
+            request = json.loads(body)
+        except ValueError:
+            request = None
+
+        if request is None:
+            response = {"status": "error", "error": "Invalid JSON"}
+        elif self.path == "/alive":
             response = handle_alive(request)
         else:
             response = {"status": "error"}
@@ -48,9 +53,15 @@ def build_key_publish(key_b64):
     return struct.pack("!BBI128s", 0xAE, 1, int(time.time()), key_bytes)
 
 def handle_alive(request):
-    key_b64 = request["key_b64"]               
-    key_bytes = base64.b64decode(key_b64)     
-    key_id = struct.unpack("!I", key_bytes[:4])[0]    
+    try:
+        key_b64 = request["key_b64"]
+        key_bytes = base64.b64decode(key_b64, validate=True)
+    except (KeyError, TypeError, ValueError):
+        return {"status": "error", "error": "Invalid key_b64"}
+    if len(key_bytes) != 128:
+        return {"status": "error", "error": "Invalid key_b64"}
+
+    key_id = struct.unpack("!I", key_bytes[:4])[0]
     with users_lock:
         if key_id not in users:
             users[key_id] = {
@@ -97,7 +108,6 @@ def choose_user_to_publish(now, last_send):
 
 
 def handle_radio_packet(packet):
-    # 1. לבדוק שזו הודעת key-publish
     if len(packet) != 134 or packet[0] != 0xAE or packet[1] != 1:
         print("radio: ignoring packet", packet[:6].hex())
         return
