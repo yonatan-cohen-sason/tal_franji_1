@@ -103,7 +103,7 @@ def choose_user_to_publish(now, last_send):
 
 def handle_radio_packet(packet):
     # 1. לבדוק שזו הודעת key-publish
-    if len(packet) != 128 or packet[0] != 0xAE or packet[1] != 1
+    if len(packet) != 128 or packet[0] != 0xAE or packet[1] != 1:
         print("radio: ignoring packet", packet[:6].hex())
         return
     ae, kind, utime, key_bytes = struct.unpack("!I", packet)
