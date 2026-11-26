@@ -47,7 +47,7 @@ class RouterHandler(BaseHTTPRequestHandler):
 
 def build_key_publish(key_b64):
     key_bytes = base64.b64decode(key_b64)
-    return struct.pack("!BBI128s", 0xAE, 1, int(time.time()), key_bytes)
+    return struct.pack("!BBI128s", \xAE, 1, int(time.time()), key_bytes)
 
 def handle_alive(request):
     key_b64 = request["key_b64"]               
@@ -67,28 +67,24 @@ def handle_alive(request):
     return {"status": "OK", "messages": []}
 
 def radio_loop():
-    with LoRaModem("sim") as modem:                     # (כבר היה)
-        modem.configure_packet_mode()                   # (כבר היה)
-        print("radio: modem ready")                     # (כבר היה)
-        last_send = 0                                   # חדש: שעון העצר
-        while True:                                     # (כבר היה)
-
-            # ---------- חדש: שידור ----------
+    with LoRaModem("sim") as modem:           
+        modem.configure_packet_mode()          
+        print("radio: modem ready")          
+        last_send = 0                         
+        while True:                                  
             now = time.time()
             if now - last_send >= 10:
                 last_send = now
                 with users_lock:
                     local_users = []
                     for user in users.values():
-                        if user[???]:
+                        if user[is_local]:
                             local_users.append(user)
                 if local_users:
                     user = local_users[0]
-                    packet = build_key_publish(???)
-                    modem.???(packet)
+                    packet = build_key_publish(user[key_b64])
+                    modem.write(packet)
                     print(f"radio: sent key-publish for {user['key_id']:08x}, {len(packet)} bytes")
-
-            # ---------- קליטה (כבר היה) ----------
             packet = modem.read_bytes()
             if packet:
                 print("radio: received", len(packet), "bytes:", packet[:6].hex())
