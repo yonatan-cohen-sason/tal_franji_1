@@ -101,6 +101,33 @@ def choose_user_to_publish(now, last_send):
 
 
 
+def handle_radio_packet(packet):
+    # 1. לבדוק שזו הודעת key-publish
+    if len(packet) != 128 or packet[0] != 0xAE or packet[1] != 1
+        print("radio: ignoring packet", packet[:6].hex())
+        return
+    ae, kind, utime, key_bytes = struct.unpack("!I", packet)
+
+    key_id = struct.unpack("!I", key_bytes)[0]
+    key_b64 = base64.b64encode(key_bytes).decode("utf-8")
+
+    delay_secs = int(time.time()) - utime
+    with users_lock:
+        if key_id in users and users[key_id]["is_local"]:
+            return
+        users[key_id] = {
+            "key_id": key_id,
+            "key_b64": key_b64,
+            "nick": "",
+            "name": "",
+            "phone": "",
+            "is_local": False,
+            "delay_secs": delay_secs,
+        }
+        print(f"radio: learned user {key_id:08x}, delay {delay_secs}s, now {len(users)} users")
+
+
+
 
 def radio_loop():
     with LoRaModem("sim") as modem:           
@@ -120,7 +147,8 @@ def radio_loop():
                 print(f"radio: sent key-publish for {user['key_id']:08x} (time #{user['publish_count']})")
             packet = modem.read_bytes()
             if packet:
-                print("radio: received", len(packet), "bytes:", packet[:6].hex())
+                if packet:
+                    handle_radio_packet(packet)
             else:
                 time.sleep(1)
 
