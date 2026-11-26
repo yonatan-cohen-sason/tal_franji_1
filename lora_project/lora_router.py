@@ -47,7 +47,7 @@ class RouterHandler(BaseHTTPRequestHandler):
 
 def build_key_publish(key_b64):
     key_bytes = base64.b64decode(key_b64)
-    return struct.pack("!BBI128s", \xAE, 1, int(time.time()), key_bytes)
+    return struct.pack("!BBI128s", 0xAE, 1, int(time.time()), key_bytes)
 
 def handle_alive(request):
     key_b64 = request["key_b64"]               
@@ -78,12 +78,12 @@ def radio_loop():
                 with users_lock:
                     local_users = []
                     for user in users.values():
-                        if user[is_local]:
+                        if user["is_local"]:
                             local_users.append(user)
                 if local_users:
                     user = local_users[0]
-                    packet = build_key_publish(user[key_b64])
-                    modem.write(packet)
+                    packet = build_key_publish(user["key_b64"])
+                    modem.write_bytes(packet)
                     print(f"radio: sent key-publish for {user['key_id']:08x}, {len(packet)} bytes")
             packet = modem.read_bytes()
             if packet:
