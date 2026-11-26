@@ -88,7 +88,7 @@ def choose_user_to_publish(now, last_send):
             return None
 
         if new_users:
-            interval = 15
+            interval = 60
             candidates = new_users
         else:
             interval = 15*60
@@ -103,12 +103,12 @@ def choose_user_to_publish(now, last_send):
 
 def handle_radio_packet(packet):
     # 1. לבדוק שזו הודעת key-publish
-    if len(packet) != 128 or packet[0] != 0xAE or packet[1] != 1:
+    if len(packet) != 134 or packet[0] != 0xAE or packet[1] != 1:
         print("radio: ignoring packet", packet[:6].hex())
         return
-    ae, kind, utime, key_bytes = struct.unpack("!I", packet)
+    ae, kind, utime, key_bytes = struct.unpack("!BBI128s", packet)
 
-    key_id = struct.unpack("!I", key_bytes)[0]
+    key_id = struct.unpack("!I", key_bytes[:4])[0]
     key_b64 = base64.b64encode(key_bytes).decode("utf-8")
 
     delay_secs = int(time.time()) - utime
@@ -147,8 +147,7 @@ def radio_loop():
                 print(f"radio: sent key-publish for {user['key_id']:08x} (time #{user['publish_count']})")
             packet = modem.read_bytes()
             if packet:
-                if packet:
-                    handle_radio_packet(packet)
+                handle_radio_packet(packet)
             else:
                 time.sleep(1)
 
