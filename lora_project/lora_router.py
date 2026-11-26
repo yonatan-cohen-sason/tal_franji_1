@@ -88,16 +88,16 @@ def choose_user_to_publish(now, last_send):
             return None
 
         if new_users:
-            interval = 5
+            interval = 15
             candidates = new_users
         else:
-            interval = 20
+            interval = 15*60
             candidates = local_users
 
         if now - last_send < interval:
             return None
 
-        return min(candidates, key=lambda u: u["publish_count"])
+        return min(candidates, key=lambda u: u["last_published"])
 
 
 
